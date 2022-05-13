@@ -1,0 +1,11 @@
+{
+  "entryPoints": ["./src"],
+  "out": "docs",
+  "excludeExternals": true,
+  "exclude": "**/*+(index|.spec|.e2e).ts",
+  "theme": "default",
+  "name": "Findora Sdk Assignment",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "hideGenerator": true
+}
