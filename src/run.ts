@@ -94,8 +94,8 @@ const _runSendTransaction = async (): Promise<void> => {
   console.log('Transaction Hash is', txHash);
 };
 // void _runCreateKeypair();
-void _runCreateKeypairFromPriKey();
-void _runGetFraBalance();
+// void _runCreateKeypairFromPriKey();
+// void _runGetFraBalance();
 // void _runGetBalance();
 // void _runSendFra();
 void _runSendTransaction();

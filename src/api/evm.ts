@@ -1,7 +1,14 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 
-import { DECIMAL_LENGTH, EVM_MAIN_URL, RADIX_NUMBER } from '../config';
-import { apiPost } from '../services/network';
+import {
+  DECIMAL_LENGTH,
+  EVM_MAIN_URL,
+  RADIX_NUMBER,
+  ETH_GASSTATION_MAIN_URL,
+  NETWORK_FEETYPE_MEDIUM,
+  NETWORK_FEETYPE_HIGH,
+} from '../config';
+import { apiGet, apiPost } from '../services/network';
 import { applyDecimalPrecision } from '../services/utils';
 import * as Types from '../types';
 
@@ -60,11 +67,55 @@ export const getBalance = async (address: string): Promise<string> => {
   }
 };
 
+export const getCurrentGasPrices = async (): Promise<Types.GasFeeResponse> => {
+  const url = ETH_GASSTATION_MAIN_URL;
+
+  const dataResult = await apiGet(url, { ...queryConfig });
+
+  const { response } = dataResult;
+  const gasObj = JSON.parse(response);
+
+  const prices = {
+    low: gasObj.safeLow / 10,
+    medium: gasObj.average / 10,
+    high: gasObj.fast / 10,
+  };
+
+  return prices;
+};
+
+export const getGasPrice = async (feeType: string, gasPrices: Types.GasFeeResponse): Promise<string> => {
+  let gasPrice;
+
+  switch (feeType) {
+    case NETWORK_FEETYPE_MEDIUM:
+      gasPrice = (gasPrices.medium * 1e9).toString(RADIX_NUMBER);
+      break;
+    case NETWORK_FEETYPE_HIGH:
+      if (typeof gasPrices.high === 'string') {
+        gasPrice = '0x9184e72a';
+      } else {
+        gasPrice = (gasPrices.high * 1e9).toString(RADIX_NUMBER);
+      }
+      break;
+    default:
+      gasPrice = (gasPrices.low * 1e9).toString(RADIX_NUMBER);
+  }
+
+  return gasPrice;
+};
+
 // Please use this code stub to implement `eth_sendTransaction`
 export const sendTransaction = async (parameters: Types.SendTxInfo[]): Promise<string> => {
   if (parameters.length < 1) throw new Error('Invalid parameters');
 
   const url = EVM_MAIN_URL;
+
+  const gas = 0x76c0;
+
+  const gasPrices = await getCurrentGasPrices();
+
+  const gasPrice = await getGasPrice(NETWORK_FEETYPE_MEDIUM, gasPrices);
 
   const rpcParams = {
     jsonrpc: '2.0',
@@ -72,8 +123,8 @@ export const sendTransaction = async (parameters: Types.SendTxInfo[]): Promise<s
     params: parameters.map(item => ({
       from: item.from,
       to: item.to,
-      gas: '0x76c0', // 30400
-      gasPrice: '0x9184e72a', // 10000000000000
+      gas: gas, // gas: '0x76c0', // 30400
+      gasPrice: gasPrice, // gasPrice: '0x9184e72a', // 10000000000000
       value: item.value,
     })),
   };

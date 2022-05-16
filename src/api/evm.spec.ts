@@ -3,9 +3,16 @@ import '@testing-library/jest-dom/extend-expect';
 import { rest } from 'msw';
 import { setupServer } from 'msw/node';
 
-import { EVM_MAIN_URL } from '../config';
+import {
+  EVM_MAIN_URL,
+  RADIX_NUMBER,
+  NETWORK_FEETYPE_LOW,
+  NETWORK_FEETYPE_MEDIUM,
+  NETWORK_FEETYPE_HIGH,
+} from '../config';
 import * as serviceUtils from '../services/utils';
-import { getBalance, sendTransaction } from './evm';
+import { getBalance, sendTransaction, getGasPrice } from './evm';
+import * as Types from '../types';
 
 const defaultUrl = EVM_MAIN_URL;
 
@@ -84,6 +91,70 @@ describe('getBalance', () => {
     await expect(getBalance(address)).rejects.toThrow(
       `Could not apply decimal precision to the parsed balance response. Details: ${applyDecimalPrecisionError.message}`,
     );
+  });
+});
+
+describe('gasPrice', () => {
+  const gasPrices = {
+    low: 25,
+    medium: 30,
+    high: 35,
+  };
+
+  it('should return proper low gas price value', async () => {
+    const networkFeeType = NETWORK_FEETYPE_LOW;
+
+    const gasPrice = await getGasPrice(networkFeeType, gasPrices);
+
+    const expectedGasPrice = (gasPrices.low * 1e9).toString(RADIX_NUMBER);
+
+    expect(gasPrice).toEqual(expectedGasPrice);
+  });
+
+  it('should return proper medium gas price value', async () => {
+    const networkFeeType = NETWORK_FEETYPE_MEDIUM;
+
+    const gasPrice = await getGasPrice(networkFeeType, gasPrices);
+
+    const expectedGasPrice = (gasPrices.medium * 1e9).toString(RADIX_NUMBER);
+
+    expect(gasPrice).toEqual(expectedGasPrice);
+  });
+
+  it('should return proper high gas price value', async () => {
+    const networkFeeType = NETWORK_FEETYPE_HIGH;
+
+    const gasPrice = await getGasPrice(networkFeeType, gasPrices);
+
+    const expectedGasPrice = (gasPrices.high * 1e9).toString(RADIX_NUMBER);
+
+    expect(gasPrice).toEqual(expectedGasPrice);
+  });
+
+  it('should return proper error', async () => {
+    const networkFeeType = '234';
+
+    const gasPrice = await getGasPrice(networkFeeType, gasPrices);
+
+    const expectedGasPrice = (gasPrices.low * 1e9).toString(RADIX_NUMBER);
+
+    expect(gasPrice).toEqual(expectedGasPrice);
+  });
+
+  it('should return proper error1', async () => {
+    const networkFeeType = NETWORK_FEETYPE_HIGH;
+
+    const gasPrices = {
+      low: 234,
+      medium: 4544,
+      high: 'xcv',
+    };
+
+    const gasPrice = await getGasPrice(networkFeeType, gasPrices as unknown as Types.GasFeeResponse);
+
+    const expectedGasPrice = '0x9184e72a'; // (gasPrices.low * 1e9).toString(RADIX_NUMBER);
+
+    expect(gasPrice).toEqual(expectedGasPrice);
   });
 });
 

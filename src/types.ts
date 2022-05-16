@@ -50,3 +50,9 @@ export interface SendTxInfo {
   to: string;
   value: string;
 }
+
+export type GasFeeResponse = {
+  low: number;
+  medium: number;
+  high: number;
+};
